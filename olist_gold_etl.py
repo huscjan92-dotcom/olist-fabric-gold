@@ -12,7 +12,7 @@ tenant_id = os.environ['AZURE_TENANT_ID']
 # (Your saved string looks great!)
 server = 'dn6gtpmbysoepba6yymfijtvym-6g4xqxngnkjepceb736ijbh3xe.datawarehouse.fabric.microsoft.com'
 database_silver = 'olist_silver'
-database_gold = 'olist_gold'
+database_gold = 'olist_gold_dw'
 
 # Standard connection string template for App Registrations
 conn_str = f'DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};Authentication=ActiveDirectoryServicePrincipal;UID={client_id};PWD={client_secret};Encrypt=yes;TrustServerCertificate=no;'
