@@ -20,12 +20,48 @@ jobs:
 
       - name: Install Microsoft ODBC Driver 18
         run: |
-          sudo su
-          curl https://microsoft.com | apt-key add -
-          curl https://microsoft.com > /etc/apt/sources.list.doc/mssql-release.list
-          exit
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+          curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+Use code with caution.📋 Full Updated run_etl.yml FileTo ensure there are no indentation or spacing errors, you can replace the entire contents of your run_etl.yml file with this exact text block:yamlname: Run Olist Gold ETL
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Runs automatically every day at 2:00 AM
+  workflow_dispatch:     # Allows you to press a button and run it manually anytime
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Microsoft ODBC Driver 18
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+          curl https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas pyodbc
+
+      - name: Run Gold ETL Script
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: python olist_gold_etl.py
+Use code with caution.💾 Commit and Run Once More!Click the green Commit changes... button at the top right to save.Jump over to the Actions tab.Select Run Olist Gold ETL from the left panel and click Run workflow.This setup safely handles the root administrative keys, so the driver should install smoothly. Let me know when it moves past this step!
 
       - name: Install Dependencies
         run: |
