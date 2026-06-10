@@ -18,10 +18,17 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Database Drivers & Packages
+      - name: Install Microsoft ODBC Driver 18
         run: |
+          sudo su
+          curl https://microsoft.com | apt-key add -
+          curl https://microsoft.com > /etc/apt/sources.list.doc/mssql-release.list
+          exit
           sudo apt-get update
-          sudo apt-get install -y unixodbc-dev
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+
+      - name: Install Dependencies
+        run: |
           pip install pandas pyodbc
 
       - name: Run Gold ETL Script
