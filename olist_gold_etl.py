@@ -40,7 +40,8 @@ def copy_table_as_is(table_name):
                 elif "float" in str(dtype):
                     cols_definition.append(f"[{col}] DECIMAL(18,4)")
                 elif "datetime" in str(dtype):
-                    cols_definition.append(f"[{col}] DATETIME2")
+                    # Fixed: Explicitly added the (6) precision required by Fabric SQL endpoint
+                    cols_definition.append(f"[{col}] DATETIME2(6)")
                 else:
                     cols_definition.append(f"[{col}] VARCHAR(255)")
             
