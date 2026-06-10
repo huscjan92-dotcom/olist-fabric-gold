@@ -43,7 +43,7 @@ def copy_table_as_is(table_name):
                     # Fixed: Explicitly added the (6) precision required by Fabric SQL endpoint
                     cols_definition.append(f"[{col}] DATETIME2(6)")
                 else:
-                    cols_definition.append(f"[{col}] VARCHAR(255)")
+                    cols_definition.append(f"[{col}] VARCHAR(8000)")
             
             # Create table under dbo schema if it doesn't exist
             create_sql = f"IF OBJECT_ID('dbo.[{table_name}]', 'U') IS NULL CREATE TABLE dbo.[{table_name}] ({', '.join(cols_definition)})"
