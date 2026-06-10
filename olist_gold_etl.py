@@ -10,7 +10,7 @@ tenant_id = os.environ['AZURE_TENANT_ID']
 
 # 2. Fabric Connection Configuration 
 # (Your saved string looks great!)
-server = '://microsoft.com'
+server = 'dn6gtpmbysoepba6yymfijtvym-6g4xqxngnkjepceb736ijbh3xe.datawarehouse.fabric.microsoft.com'
 database_silver = 'olist_silver'
 database_gold = 'olist_gold'
 
