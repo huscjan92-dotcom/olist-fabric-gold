@@ -1,0 +1,32 @@
+name: Run Olist Gold ETL
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Runs automatically every day at 2:00 AM
+  workflow_dispatch:     # Allows you to press a button and run it manually anytime
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Database Drivers & Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unixodbc-dev
+          pip install pandas pyodbc
+
+      - name: Run Gold ETL Script
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: python olist_gold_etl.py
