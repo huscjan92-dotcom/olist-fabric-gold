@@ -17,50 +17,22 @@ database_gold = 'olist_gold_dw'
 # Standard connection string template for App Registrations
 conn_str = f'DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};Authentication=ActiveDirectoryServicePrincipal;UID={client_id};PWD={client_secret};Encrypt=yes;TrustServerCertificate=no;'
 
-def copy_table_as_is(table_name):
-    print(f"📖 Reading [{table_name}] from Silver Lakehouse...")
+def fast_mirror_table(table_name):
+    print(f"⚡ Processing [{table_name}] via Fabric internal engine...")
     try:
-        # Read the data exactly as it is using the explicit dbo schema
-        with pyodbc.connect(conn_str + f'DATABASE={database_silver};') as conn:
-            df = pd.read_sql(f"SELECT * FROM dbo.[{table_name}]", conn)
-        
-        if df.empty:
-            print(f"⚠️ Warning: {table_name} was empty in Silver. Skipping.")
-            return
-
-        print(f"✍️ Writing [{table_name}] directly into Gold Lakehouse...")
         with pyodbc.connect(conn_str + f'DATABASE={database_gold};') as conn:
             cursor = conn.cursor()
             
-            # Build strict dynamic SQL column strings based on your actual data
-            cols_definition = []
-            for col, dtype in zip(df.columns, df.dtypes):
-                if "int" in str(dtype):
-                    cols_definition.append(f"[{col}] INT")
-                elif "float" in str(dtype):
-                    cols_definition.append(f"[{col}] DECIMAL(18,4)")
-                elif "datetime" in str(dtype):
-                    # Fixed: Explicitly added the (6) precision required by Fabric SQL endpoint
-                    cols_definition.append(f"[{col}] DATETIME2(6)")
-                else:
-                    cols_definition.append(f"[{col}] VARCHAR(8000)")
+            # Step A: Safely drop the table if it already exists in your Gold warehouse
+            cursor.execute(f"IF OBJECT_ID('dbo.[{table_name}]', 'U') IS NOT NULL DROP TABLE dbo.[{table_name}]")
             
-            # Create table under dbo schema if it doesn't exist
-            create_sql = f"IF OBJECT_ID('dbo.[{table_name}]', 'U') IS NULL CREATE TABLE dbo.[{table_name}] ({', '.join(cols_definition)})"
-            cursor.execute(create_sql)
+            # Step B: Fast cross-database copy straight from Silver to Gold
+            # Fabric reads across items in the same workspace automatically using three-part naming structures
+            copy_sql = f"SELECT * INTO dbo.[{table_name}] FROM [{database_silver}].dbo.[{table_name}]"
+            cursor.execute(copy_sql)
             
-            # Truncate old data to ensure clean overwrite
-            cursor.execute(f"TRUNCATE TABLE dbo.[{table_name}]")
-            
-            # Bulk load values for maximum speed
-            placeholders = ", ".join(["?"] * len(df.columns))
-            insert_sql = f"INSERT INTO dbo.[{table_name}] VALUES ({placeholders})"
-            
-            # Convert dataframe back to raw list of tuples for quick pyodbc insertion
-            records = [tuple(x) for x in df.to_numpy()]
-            cursor.executemany(insert_sql, records)
             conn.commit()
-        print(f"✅ Successfully mirrored [{table_name}] to Gold!")
+        print(f"✅ Successfully mirrored [{table_name}] to Gold Warehouse!")
     except Exception as e:
         print(f"❌ Error processing table [{table_name}]: {str(e)}")
         raise e
@@ -79,8 +51,8 @@ all_tables = [
     "silver_product_category_name_translation"
 ]
 
-# Run the mirror loop for every single table automatically
+# Run the lightning fast copy loop
 for table in all_tables:
-    copy_table_as_is(table)
+    fast_mirror_table(table)
 
-print("🎉 Success! All Olist Silver tables have been perfectly mirrored to Gold!")
+print("🎉 Success! All Olist Silver tables have been perfectly copied to the Gold Warehouse instantly!")
